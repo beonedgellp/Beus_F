@@ -163,6 +163,7 @@ input {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
 }
 .topbar {
   display: flex;
@@ -209,6 +210,7 @@ input {
 }
 .content {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 24px;
   max-width: 1000px;
@@ -220,7 +222,7 @@ input {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px - 48px);
+  height: 100%;
 }
 .chat-header {
   display: flex;
@@ -239,6 +241,7 @@ input {
 }
 .chat-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px 4px;
   display: flex;
@@ -276,7 +279,7 @@ input {
   color: var(--muted);
 }
 .msg-image img {
-  max-width: 260px;
+  max-width: min(260px, 100%);
   max-height: 260px;
   border-radius: 8px;
   display: block;
@@ -462,4 +465,114 @@ input {
 .shared-heading {
   font-weight: 700;
   margin-bottom: 6px;
+}
+
+
+/* ============================================================
+   Responsive layout
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .msg-bubble {
+    max-width: 82%;
+  }
+}
+
+/* Phones */
+@media (max-width: 640px) {
+  .topbar {
+    gap: 10px;
+    padding: 0 14px;
+    height: 56px;
+  }
+  .brand {
+    font-size: 18px;
+  }
+  .user-area {
+    margin-left: auto;
+    gap: 8px;
+  }
+  /* Hide the email/name label to save room; keep the log-out button */
+  .user-name {
+    display: none;
+  }
+
+  /* Move the primary nav to a fixed bottom tab bar */
+  .nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex: none;
+    justify-content: space-around;
+    gap: 4px;
+    padding: 8px 6px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    z-index: 30;
+    /* respect iOS home-indicator safe area */
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .nav a {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 14px;
+  }
+
+  /* Leave room above the bottom nav */
+  .content {
+    padding: 14px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .msg-bubble {
+    max-width: 88%;
+  }
+
+  /* Stack upload controls */
+  .upload-row {
+    gap: 8px;
+  }
+  .upload-row input[type='text'] {
+    width: 100%;
+    flex-basis: 100%;
+  }
+  .colour-picker {
+    flex-wrap: wrap;
+  }
+
+  .file-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .chat-input {
+    gap: 6px;
+  }
+  .chat-input input[type='text'] {
+    padding: 10px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .nav a {
+    font-size: 13px;
+    padding: 9px 2px;
+  }
+  .brand {
+    font-size: 16px;
+  }
 }
