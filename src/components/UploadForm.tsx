@@ -1,4 +1,6 @@
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
+import { api } from '../api/client';
+import { formatBytes } from '../utils/format';
 
 export const LABEL_COLOURS = [
   '#4f46e5', // indigo
@@ -17,6 +19,12 @@ export interface UploadPayload {
   colour: string;
 }
 
+interface ExtensionMeta {
+  groups: Record<string, string[]>;
+  all: string[];
+  maxUploadBytes: number;
+}
+
 export default function UploadForm({
   onUpload,
   busy,
@@ -29,7 +37,16 @@ export default function UploadForm({
   const [file, setFile] = useState<File | null>(null);
   const [heading, setHeading] = useState('');
   const [colour, setColour] = useState(defaultColour);
+  const [meta, setMeta] = useState<ExtensionMeta | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    api
+      .get<ExtensionMeta>('/meta/extensions')
+      .then((res) => setMeta(res.data))
+      .catch(() => undefined);
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,12 +57,16 @@ export default function UploadForm({
     if (fileRef.current) fileRef.current.value = '';
   }
 
+  const accept = meta?.all.join(',');
+  const categories = meta ? Object.keys(meta.groups) : [];
+
   return (
     <form className="card upload-form" onSubmit={onSubmit}>
       <div className="upload-row">
         <input
           ref={fileRef}
           type="file"
+          accept={accept}
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
         <input
@@ -55,6 +76,23 @@ export default function UploadForm({
           onChange={(e) => setHeading(e.target.value)}
         />
       </div>
+
+      {meta && (
+        <div className="upload-hint">
+          <span>
+            Allowed: {categories.join(', ')} · up to {formatBytes(meta.maxUploadBytes)}
+          </span>{' '}
+          <button
+            type="button"
+            className="link-plain"
+            onClick={() => setShowAll((s) => !s)}
+          >
+            {showAll ? 'hide' : 'see all extensions'}
+          </button>
+          {showAll && <div className="upload-ext-list">{meta.all.join('  ')}</div>}
+        </div>
+      )}
+
       <div className="upload-row">
         <div className="colour-picker">
           {LABEL_COLOURS.map((c) => (

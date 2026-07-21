@@ -576,3 +576,32 @@ input {
     font-size: 16px;
   }
 }
+
+
+/* Upload hint (allowed extensions) */
+.upload-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.link-plain {
+  background: none;
+  border: none;
+  color: var(--primary-hover);
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+}
+.upload-ext-list {
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  word-spacing: 2px;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
