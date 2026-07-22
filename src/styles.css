@@ -331,6 +331,8 @@ input {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  /* shrinks to the visible area when the mobile keyboard is open */
+  height: var(--app-h, 100dvh);
 }
 .topbar {
   display: flex;
@@ -983,6 +985,18 @@ input {
   }
   .content.content-chat .chat-page {
     padding: 8px 12px 10px;
+  }
+
+  /* When the keyboard is open, hide the bottom tab bar and reclaim its space
+     so the message composer sits right above the keyboard. */
+  body.kb-open .nav {
+    display: none;
+  }
+  body.kb-open .content.content-chat {
+    padding-bottom: 6px;
+  }
+  body.kb-open .content {
+    padding-bottom: 6px;
   }
 
   .msg-bubble {

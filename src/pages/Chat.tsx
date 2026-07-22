@@ -318,6 +318,9 @@ export default function Chat() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onPaste={onPaste}
+            onFocus={() =>
+              setTimeout(() => bottomRef.current?.scrollIntoView({ block: 'end' }), 300)
+            }
           />
           {showEmoji && (
             <EmojiPicker

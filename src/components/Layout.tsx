@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
 import { LogoutIcon } from './Icons';
 import Avatar from './Avatar';
 
@@ -8,6 +9,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isChat = location.pathname === '/chat';
+  useKeyboardViewport();
 
   return (
     <div className="app-shell">
