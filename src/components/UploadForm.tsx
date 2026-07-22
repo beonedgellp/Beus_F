@@ -3,14 +3,14 @@ import { api } from '../api/client';
 import { formatBytes } from '../utils/format';
 
 export const LABEL_COLOURS = [
-  '#4f46e5', // indigo
-  '#0891b2', // cyan
-  '#059669', // emerald
-  '#d97706', // amber
-  '#dc2626', // red
-  '#7c3aed', // violet
-  '#db2777', // pink
-  '#475569', // slate
+  '#3a6ea5', // steel blue
+  '#2f7d7a', // teal
+  '#4a916b', // muted green
+  '#b08a3e', // ochre
+  '#b5504f', // brick red
+  '#5b6597', // muted indigo
+  '#7a5c86', // muted plum
+  '#4b5b6e', // slate
 ];
 
 export interface UploadPayload {

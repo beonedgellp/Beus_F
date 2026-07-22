@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api, downloadFile, extractError } from '../api/client';
+import { useConfirm } from '../context/ConfirmContext';
 import UploadForm, { UploadPayload } from '../components/UploadForm';
+import { DownloadIcon, TrashIcon } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
 import type { FileItem } from '../api/types';
 
 export default function Collective() {
+  const confirm = useConfirm();
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -42,11 +45,21 @@ export default function Collective() {
     }
   }
 
-  async function onDelete(id: string) {
-    if (!confirm('Delete this file for everyone?')) return;
+  async function onDelete(item: FileItem) {
+    const ok = await confirm({
+      title: 'Delete shared file',
+      message: (
+        <>
+          Delete <strong>{item.fileName}</strong> for the whole team? This cannot be undone.
+        </>
+      ),
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     try {
-      await api.delete(`/collective/${id}`);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await api.delete(`/collective/${item.id}`);
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
     } catch (err) {
       setError(extractError(err, 'Delete failed'));
     }
@@ -95,11 +108,17 @@ export default function Collective() {
                 </div>
               </div>
               <div className="file-actions">
-                <button className="btn-ghost" onClick={() => onDownload(item)}>
-                  Download
+                <button className="btn-ghost btn-icon" onClick={() => onDownload(item)}>
+                  <DownloadIcon size={16} />
+                  <span className="btn-icon-label">Download</span>
                 </button>
-                <button className="link-danger" onClick={() => onDelete(item.id)}>
-                  Delete
+                <button
+                  className="icon-btn icon-btn-danger"
+                  onClick={() => onDelete(item)}
+                  title="Delete file"
+                  aria-label="Delete file"
+                >
+                  <TrashIcon size={17} />
                 </button>
               </div>
             </div>

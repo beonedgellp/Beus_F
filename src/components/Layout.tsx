@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LogoutIcon } from './Icons';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -7,7 +8,10 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand">Beus</div>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">Be</span>
+          <span className="brand-name">BeUs</span>
+        </div>
         <nav className="nav">
           <NavLink to="/chat" className={({ isActive }) => (isActive ? 'active' : '')}>
             Chat
@@ -21,8 +25,9 @@ export default function Layout() {
         </nav>
         <div className="user-area">
           <span className="user-name">{user?.name}</span>
-          <button className="btn-ghost" onClick={logout}>
-            Log out
+          <button className="btn-ghost btn-icon" onClick={logout} title="Log out">
+            <LogoutIcon size={16} />
+            <span className="btn-icon-label">Log out</span>
           </button>
         </div>
       </header>

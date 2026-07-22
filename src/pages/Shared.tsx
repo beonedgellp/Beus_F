@@ -63,7 +63,10 @@ export default function Shared() {
   return (
     <div className="center-screen">
       <div className="card auth-card">
-        <h1 className="auth-title">Beus</h1>
+        <div className="auth-brand">
+          <span className="brand-mark brand-mark-lg" aria-hidden="true">Be</span>
+          <h1 className="auth-title">BeUs</h1>
+        </div>
         {state.status === 'loading' && <p className="muted">Loading…</p>}
 
         {state.status === 'error' && (

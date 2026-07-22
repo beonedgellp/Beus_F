@@ -28,8 +28,11 @@ export default function Login() {
   return (
     <div className="center-screen">
       <form className="card auth-card" onSubmit={onSubmit}>
-        <h1 className="auth-title">Beus</h1>
-        <p className="auth-sub">Sign in to your team workspace</p>
+        <div className="auth-brand">
+          <span className="brand-mark brand-mark-lg" aria-hidden="true">Be</span>
+          <h1 className="auth-title">BeUs</h1>
+        </div>
+        <p className="auth-sub">Made for the Beonedge family</p>
 
         {error && <div className="alert-error">{error}</div>}
 
@@ -60,7 +63,7 @@ export default function Login() {
         </button>
 
         <p className="hint">
-          First time? Use the shared starting password — you&apos;ll set your own next.
+          Welcome to the Beonedge family — sign in with your work email.
         </p>
       </form>
     </div>

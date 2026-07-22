@@ -1,17 +1,33 @@
 import { useEffect, useState } from 'react';
 import { api, downloadFile, extractError } from '../api/client';
+import { useConfirm } from '../context/ConfirmContext';
 import UploadForm, { UploadPayload, LABEL_COLOURS } from '../components/UploadForm';
+import {
+  DownloadIcon,
+  ShareIcon,
+  TrashIcon,
+  MoveToCollectiveIcon,
+  CopyIcon,
+  RevokeIcon,
+} from '../components/Icons';
 import { formatBytes, formatDate, formatTime } from '../utils/format';
 import type { FileItem, ShareLinkDto } from '../api/types';
 
 export default function Personal() {
+  const confirm = useConfirm();
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [openShares, setOpenShares] = useState<string | null>(null);
   const [shares, setShares] = useState<Record<string, ShareLinkDto[]>>({});
   const [copied, setCopied] = useState<string | null>(null);
+
+  function flash(message: string) {
+    setNotice(message);
+    setTimeout(() => setNotice((n) => (n === message ? '' : n)), 2500);
+  }
 
   async function load() {
     try {
@@ -45,11 +61,21 @@ export default function Personal() {
     }
   }
 
-  async function onDelete(id: string) {
-    if (!confirm('Delete this file and all its share links?')) return;
+  async function onDelete(item: FileItem) {
+    const ok = await confirm({
+      title: 'Delete file',
+      message: (
+        <>
+          Delete <strong>{item.fileName}</strong> and all its share links? This cannot be undone.
+        </>
+      ),
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     try {
-      await api.delete(`/personal/${id}`);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await api.delete(`/personal/${item.id}`);
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
     } catch (err) {
       setError(extractError(err, 'Delete failed'));
     }
@@ -60,6 +86,29 @@ export default function Personal() {
       await downloadFile(`/personal/${item.id}/download`, item.fileName);
     } catch (err) {
       setError(extractError(err, 'Download failed'));
+    }
+  }
+
+  async function onTransferToCollective(item: FileItem) {
+    const ok = await confirm({
+      title: 'Send to Collective',
+      message: (
+        <>
+          Copy <strong>{item.fileName}</strong> into the shared Collective space? Everyone on the
+          team will be able to see and download it. Your personal copy stays private.
+        </>
+      ),
+      confirmText: 'Send to Collective',
+    });
+    if (!ok) return;
+    try {
+      await api.post(`/personal/${item.id}/to-collective`, {
+        heading: item.label.heading,
+        colour: item.label.colour,
+      });
+      flash(`"${item.fileName}" was sent to the Collective space.`);
+    } catch (err) {
+      setError(extractError(err, 'Transfer failed'));
     }
   }
 
@@ -87,6 +136,13 @@ export default function Personal() {
   }
 
   async function revokeShare(itemId: string, shareId: string) {
+    const ok = await confirm({
+      title: 'Revoke link',
+      message: 'Revoke this share link? Anyone using it will immediately lose access.',
+      confirmText: 'Revoke',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const res = await api.post<ShareLinkDto>(`/personal/shares/${shareId}/revoke`, {});
       setShares((prev) => ({
@@ -99,6 +155,13 @@ export default function Personal() {
   }
 
   async function deleteShare(itemId: string, shareId: string) {
+    const ok = await confirm({
+      title: 'Remove link',
+      message: 'Permanently remove this revoked link from the list?',
+      confirmText: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await api.delete(`/personal/shares/${shareId}`);
       setShares((prev) => ({
@@ -126,13 +189,14 @@ export default function Personal() {
         <div>
           <h2>Personal space</h2>
           <p className="muted">
-            Your private files. Share any file with a revocable link.
+            Your private files. Share with a revocable link, or send a copy to the team.
           </p>
         </div>
       </div>
 
       <UploadForm onUpload={onUpload} busy={busy} defaultColour={LABEL_COLOURS[1]} />
 
+      {notice && <div className="alert-success">{notice}</div>}
       {error && <div className="alert-error">{error}</div>}
 
       {loading ? (
@@ -155,14 +219,37 @@ export default function Personal() {
                 </div>
               </div>
               <div className="file-actions">
-                <button className="btn-ghost" onClick={() => onDownload(item)}>
-                  Download
+                <button
+                  className="icon-btn"
+                  onClick={() => onDownload(item)}
+                  title="Download"
+                  aria-label="Download"
+                >
+                  <DownloadIcon size={17} />
                 </button>
-                <button className="btn-ghost" onClick={() => toggleShares(item.id)}>
-                  Share
+                <button
+                  className="icon-btn"
+                  onClick={() => toggleShares(item.id)}
+                  title="Share links"
+                  aria-label="Share links"
+                >
+                  <ShareIcon size={17} />
                 </button>
-                <button className="link-danger" onClick={() => onDelete(item.id)}>
-                  Delete
+                <button
+                  className="btn-ghost btn-icon"
+                  onClick={() => onTransferToCollective(item)}
+                  title="Send a copy to the Collective space"
+                >
+                  <MoveToCollectiveIcon size={16} />
+                  <span className="btn-icon-label">To Collective</span>
+                </button>
+                <button
+                  className="icon-btn icon-btn-danger"
+                  onClick={() => onDelete(item)}
+                  title="Delete"
+                  aria-label="Delete"
+                >
+                  <TrashIcon size={17} />
                 </button>
               </div>
 
@@ -191,26 +278,33 @@ export default function Personal() {
                           <div className="share-actions">
                             {!s.revoked && (
                               <button
-                                className="btn-ghost btn-sm"
+                                className="btn-ghost btn-sm btn-icon"
                                 onClick={() => copyLink(s.url, s.id)}
                               >
-                                {copied === s.id ? 'Copied!' : 'Copy'}
+                                <CopyIcon size={14} />
+                                <span className="btn-icon-label">
+                                  {copied === s.id ? 'Copied!' : 'Copy'}
+                                </span>
                               </button>
                             )}
                             {!s.revoked && (
                               <button
-                                className="link-danger"
+                                className="icon-btn icon-btn-danger btn-sm"
                                 onClick={() => revokeShare(item.id, s.id)}
+                                title="Revoke link"
+                                aria-label="Revoke link"
                               >
-                                Revoke
+                                <RevokeIcon size={15} />
                               </button>
                             )}
                             {s.revoked && (
                               <button
-                                className="link-danger"
+                                className="icon-btn icon-btn-danger btn-sm"
                                 onClick={() => deleteShare(item.id, s.id)}
+                                title="Remove link"
+                                aria-label="Remove link"
                               >
-                                Remove
+                                <TrashIcon size={15} />
                               </button>
                             )}
                           </div>
