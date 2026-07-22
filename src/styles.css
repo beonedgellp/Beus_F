@@ -468,6 +468,16 @@ input {
   flex-direction: column;
   gap: 10px;
 }
+/* Keep the conversation and composer in a comfortable centred column while
+   the chosen background still fills the full page width. */
+.chat-header,
+.chat-messages,
+.chat-input {
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .msg {
   display: flex;
   align-items: flex-end;
