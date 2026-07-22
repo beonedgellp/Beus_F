@@ -3,12 +3,17 @@ export interface User {
   email: string;
   name: string;
   mustChangePassword: boolean;
+  avatar?: string;
+  avatarColor?: string;
+  bio?: string;
 }
 
 export interface Member {
   id: string;
   name: string;
   email: string;
+  avatar?: string;
+  avatarColor?: string;
 }
 
 export interface Label {
@@ -39,8 +44,8 @@ export interface ShareLinkDto {
 
 export interface ChatMessage {
   id: string;
-  sender: { id: string; name: string };
-  kind: 'text' | 'image';
+  sender: { id: string; name: string; avatar?: string; avatarColor?: string };
+  kind: 'text' | 'image' | 'file';
   text?: string;
   fileId?: string;
   fileName?: string;

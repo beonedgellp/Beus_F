@@ -2,10 +2,21 @@ import { ChangeEvent, ClipboardEvent, FormEvent, useEffect, useRef, useState } f
 import { useChatSocket } from '../hooks/useChatSocket';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
-import { api, extractError } from '../api/client';
+import { api, downloadFile, extractError } from '../api/client';
 import AuthImage from '../components/AuthImage';
-import { PaperclipIcon, ClipboardIcon, SendIcon, TrashIcon } from '../components/Icons';
-import { formatTime } from '../utils/format';
+import Avatar from '../components/Avatar';
+import EmojiPicker from '../components/EmojiPicker';
+import {
+  PaperclipIcon,
+  ClipboardIcon,
+  SendIcon,
+  TrashIcon,
+  SmileIcon,
+  FileIcon,
+  DownloadIcon,
+  MoveToCollectiveIcon,
+} from '../components/Icons';
+import { formatBytes, formatTime } from '../utils/format';
 import type { ChatMessage } from '../api/types';
 
 export default function Chat() {
@@ -14,13 +25,21 @@ export default function Chat() {
   const { messages, connected, error, sendText, deleteMessage, appendLocal } = useChatSocket();
   const [text, setText] = useState('');
   const [sendError, setSendError] = useState('');
+  const [notice, setNotice] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [saveMenu, setSaveMenu] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  function flash(message: string) {
+    setNotice(message);
+    setTimeout(() => setNotice((n) => (n === message ? '' : n)), 2500);
+  }
 
   async function onSend(e: FormEvent) {
     e.preventDefault();
@@ -36,26 +55,26 @@ export default function Chat() {
     }
   }
 
-  /** Shared image sender used by the picker, paste event and paste button. */
-  async function uploadImageFile(file: File) {
+  /** Upload any file (image or document) as a chat attachment. */
+  async function uploadAttachment(file: File) {
     setUploading(true);
     setSendError('');
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await api.post<ChatMessage>('/chat/image', form);
+      const res = await api.post<ChatMessage>('/chat/attachment', form);
       appendLocal(res.data);
     } catch (err) {
-      setSendError(extractError(err, 'Failed to send image'));
+      setSendError(extractError(err, 'Failed to send attachment'));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
     }
   }
 
-  async function onPickImage(e: ChangeEvent<HTMLInputElement>) {
+  async function onPickFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) await uploadImageFile(file);
+    if (file) await uploadAttachment(file);
   }
 
   /** Paste an image straight into the message box (Ctrl/Cmd+V). */
@@ -68,7 +87,7 @@ export default function Chat() {
         const file = item.getAsFile();
         if (file) {
           e.preventDefault();
-          await uploadImageFile(file);
+          await uploadAttachment(file);
           return;
         }
       }
@@ -85,7 +104,7 @@ export default function Chat() {
         if (imageType) {
           const blob = await clip.getType(imageType);
           const ext = imageType.split('/')[1] || 'png';
-          await uploadImageFile(new File([blob], `pasted-${Date.now()}.${ext}`, { type: imageType }));
+          await uploadAttachment(new File([blob], `pasted-${Date.now()}.${ext}`, { type: imageType }));
           return;
         }
       }
@@ -93,6 +112,10 @@ export default function Chat() {
     } catch {
       setSendError('Clipboard access was blocked. Try Ctrl+V inside the message box instead.');
     }
+  }
+
+  function addEmoji(emoji: string) {
+    setText((t) => t + emoji);
   }
 
   async function onDelete(id: string) {
@@ -110,6 +133,28 @@ export default function Chat() {
     }
   }
 
+  async function saveToSpace(m: ChatMessage, target: 'personal' | 'collective') {
+    setSaveMenu(null);
+    try {
+      await api.post(`/chat/${m.id}/save`, { target });
+      flash(
+        target === 'collective'
+          ? `Saved "${m.fileName}" to the Collective space.`
+          : `Saved "${m.fileName}" to your Personal space.`,
+      );
+    } catch (err) {
+      setSendError(extractError(err, 'Could not save file'));
+    }
+  }
+
+  async function downloadAttachment(m: ChatMessage) {
+    try {
+      await downloadFile(`/chat/file/${m.fileId}/download`, m.fileName || 'file');
+    } catch (err) {
+      setSendError(extractError(err, 'Download failed'));
+    }
+  }
+
   return (
     <div className="chat-page">
       <div className="chat-header">
@@ -121,6 +166,7 @@ export default function Chat() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {notice && <div className="alert-success">{notice}</div>}
 
       <div className="chat-messages">
         {messages.length === 0 && (
@@ -128,8 +174,18 @@ export default function Chat() {
         )}
         {messages.map((m) => {
           const mine = m.sender.id === user?.id;
+          const hasFile = !m.deleted && !!m.fileId;
           return (
             <div key={m.id} className={`msg ${mine ? 'mine' : ''}`}>
+              {!mine && (
+                <Avatar
+                  name={m.sender.name}
+                  avatar={m.sender.avatar}
+                  color={m.sender.avatarColor}
+                  size={30}
+                  className="msg-avatar"
+                />
+              )}
               <div className={`msg-bubble ${m.deleted ? 'deleted' : ''}`}>
                 {!mine && !m.deleted && <div className="msg-sender">{m.sender.name}</div>}
                 {m.deleted ? (
@@ -139,14 +195,57 @@ export default function Chat() {
                     <AuthImage path={`/chat/file/${m.fileId}`} alt={m.fileName} />
                     {m.text && <div className="msg-caption">{m.text}</div>}
                   </div>
+                ) : m.kind === 'file' && m.fileId ? (
+                  <div className="file-chip">
+                    <span className="file-chip-icon">
+                      <FileIcon size={20} />
+                    </span>
+                    <div className="file-chip-info">
+                      <div className="file-chip-name" title={m.fileName}>
+                        {m.fileName}
+                      </div>
+                      <div className="file-chip-size">{formatBytes(m.size)}</div>
+                    </div>
+                    <button
+                      className="icon-btn btn-sm"
+                      onClick={() => downloadAttachment(m)}
+                      title="Download"
+                      aria-label="Download"
+                    >
+                      <DownloadIcon size={15} />
+                    </button>
+                  </div>
                 ) : (
                   <div className="msg-text">{m.text}</div>
                 )}
+
                 <div className="msg-meta">
                   <span className="msg-time">{formatTime(m.createdAt)}</span>
+                  {hasFile && (
+                    <span className="save-wrap">
+                      <button
+                        className="msg-action"
+                        onClick={() => setSaveMenu((s) => (s === m.id ? null : m.id))}
+                        title="Save to a space"
+                        aria-label="Save to a space"
+                      >
+                        <MoveToCollectiveIcon size={14} />
+                      </button>
+                      {saveMenu === m.id && (
+                        <span className="save-menu">
+                          <button onClick={() => saveToSpace(m, 'personal')}>
+                            Save to Personal
+                          </button>
+                          <button onClick={() => saveToSpace(m, 'collective')}>
+                            Save to Collective
+                          </button>
+                        </span>
+                      )}
+                    </span>
+                  )}
                   {mine && !m.deleted && (
                     <button
-                      className="msg-delete"
+                      className="msg-action msg-action-danger"
                       onClick={() => onDelete(m.id)}
                       title="Delete message"
                       aria-label="Delete message"
@@ -165,21 +264,40 @@ export default function Chat() {
       {sendError && <div className="alert-error">{sendError}</div>}
 
       <form className="chat-input" onSubmit={onSend}>
-        <input
-          type="text"
-          placeholder="Type a message, or paste an image…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onPaste={onPaste}
-        />
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickImage} />
+        <div className="chat-input-field">
+          <input
+            type="text"
+            placeholder="Type a message, or paste an image…"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onPaste={onPaste}
+          />
+          {showEmoji && (
+            <EmojiPicker
+              onSelect={(e) => {
+                addEmoji(e);
+              }}
+              onClose={() => setShowEmoji(false)}
+            />
+          )}
+        </div>
+        <input ref={fileRef} type="file" hidden onChange={onPickFile} />
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => setShowEmoji((s) => !s)}
+          title="Emoji"
+          aria-label="Emoji"
+        >
+          <SmileIcon />
+        </button>
         <button
           type="button"
           className="icon-btn"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          title="Attach a picture"
-          aria-label="Attach a picture"
+          title="Attach a file"
+          aria-label="Attach a file"
         >
           <PaperclipIcon />
         </button>

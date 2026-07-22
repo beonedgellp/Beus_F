@@ -5,6 +5,7 @@ import ChangePassword from './pages/ChangePassword';
 import Chat from './pages/Chat';
 import Collective from './pages/Collective';
 import Personal from './pages/Personal';
+import Profile from './pages/Profile';
 import Shared from './pages/Shared';
 import Layout from './components/Layout';
 
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/chat" element={<Chat />} />
         <Route path="/collective" element={<Collective />} />
         <Route path="/personal" element={<Personal />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/chat" replace />} />
