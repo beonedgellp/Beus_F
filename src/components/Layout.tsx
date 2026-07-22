@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogoutIcon } from './Icons';
 import Avatar from './Avatar';
@@ -6,6 +6,8 @@ import Avatar from './Avatar';
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isChat = location.pathname === '/chat';
 
   return (
     <div className="app-shell">
@@ -44,7 +46,7 @@ export default function Layout() {
           </button>
         </div>
       </header>
-      <main className="content">
+      <main className={`content ${isChat ? 'content-chat' : ''}`}>
         <Outlet />
       </main>
     </div>

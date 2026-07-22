@@ -407,8 +407,13 @@ input {
   flex-direction: column;
   height: 100%;
   background: var(--chat-bg, transparent);
-  border-radius: 12px;
-  padding: 6px 10px;
+  padding: 10px 18px 12px;
+}
+/* Chat uses the full width/height of the main area so the chosen background
+   fills the whole page, not just a centred box. */
+.content-chat {
+  max-width: none;
+  padding: 0;
 }
 .chat-header {
   display: flex;
@@ -968,6 +973,14 @@ input {
   .content {
     padding: 14px;
     padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  }
+  /* keep full-bleed chat but clear the fixed bottom nav */
+  .content-chat {
+    padding: 0;
+    padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+  .content-chat .chat-page {
+    padding: 8px 12px 10px;
   }
 
   .msg-bubble {
