@@ -130,10 +130,10 @@ export default function Chat() {
           const mine = m.sender.id === user?.id;
           return (
             <div key={m.id} className={`msg ${mine ? 'mine' : ''}`}>
-              <div className="msg-bubble">
-                {!mine && <div className="msg-sender">{m.sender.name}</div>}
+              <div className={`msg-bubble ${m.deleted ? 'deleted' : ''}`}>
+                {!mine && !m.deleted && <div className="msg-sender">{m.sender.name}</div>}
                 {m.deleted ? (
-                  <em className="msg-deleted">message deleted</em>
+                  <em className="msg-deleted">This message was deleted</em>
                 ) : m.kind === 'image' && m.fileId ? (
                   <div className="msg-image">
                     <AuthImage path={`/chat/file/${m.fileId}`} alt={m.fileName} />
@@ -143,15 +143,15 @@ export default function Chat() {
                   <div className="msg-text">{m.text}</div>
                 )}
                 <div className="msg-meta">
-                  <span>{formatTime(m.createdAt)}</span>
+                  <span className="msg-time">{formatTime(m.createdAt)}</span>
                   {mine && !m.deleted && (
                     <button
-                      className="icon-btn icon-btn-danger"
+                      className="msg-delete"
                       onClick={() => onDelete(m.id)}
                       title="Delete message"
                       aria-label="Delete message"
                     >
-                      <TrashIcon size={15} />
+                      <TrashIcon size={14} />
                     </button>
                   )}
                 </div>
