@@ -5,12 +5,12 @@ import { formatBytes } from '../utils/format';
 export const LABEL_COLOURS = [
   '#00a4ff', // sky
   '#00ccff', // neon
-  '#0c067b', // royal
-  '#1102ce', // deep blue
   '#5b6cff', // indigo
-  '#00d9c0', // teal
+  '#ffd15a', // gold
+  '#ff8a3d', // orange
+  '#ff5a5f', // coral red
   '#ff018f', // pink
-  '#ffcc00', // amber
+  '#0c067b', // royal
 ];
 
 export interface UploadPayload {
