@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
 import { LogoutIcon } from './Icons';
 import Avatar from './Avatar';
+import NotificationBell from './NotificationBell';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -27,8 +28,12 @@ export default function Layout() {
           <NavLink to="/personal" className={({ isActive }) => (isActive ? 'active' : '')}>
             Personal
           </NavLink>
+          <NavLink to="/groups" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Groups
+          </NavLink>
         </nav>
         <div className="user-area">
+          <NotificationBell />
           <button
             className="profile-btn"
             onClick={() => navigate('/profile')}

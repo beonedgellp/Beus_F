@@ -65,6 +65,53 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  colour: string;
+  createdBy?: string;
+  members: Member[];
+  memberCount: number;
+  isMember: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface GroupMessage {
+  id: string;
+  group: string;
+  sender: { id: string; name: string; avatar?: string; avatarColor?: string };
+  kind: 'text' | 'image' | 'video' | 'audio' | 'file';
+  text?: string;
+  fileId?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  important: boolean;
+  deleted: boolean;
+  reply?: {
+    id: string;
+    senderName: string;
+    kind: string;
+    deleted: boolean;
+    text?: string;
+    fileName?: string;
+  };
+  scheduledFor?: string;
+  createdAt: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  kind: string;
+  group?: string;
+  groupName?: string;
+  fromName?: string;
+  preview?: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface SharedFileInfo {
   fileName: string;
   mimeType: string;
