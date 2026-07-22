@@ -10,6 +10,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, downloadFile, extractError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePrompt } from '../context/PromptContext';
 import { useGroupSocket } from '../hooks/useGroupSocket';
 import Avatar from '../components/Avatar';
 import AuthImage from '../components/AuthImage';
@@ -36,7 +37,8 @@ export default function GroupView() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { incoming, deletedId, clearIncoming, clearDeleted } = useGroupSocket(id);
+  const prompt = usePrompt();
+  const { incoming, deletedId, removed, clearIncoming, clearDeleted } = useGroupSocket(id);
 
   const [group, setGroup] = useState<Group | null>(null);
   const [messages, setMessages] = useState<GroupMessage[]>([]);
@@ -114,6 +116,11 @@ export default function GroupView() {
     );
     clearDeleted();
   }, [deletedId, clearDeleted]);
+
+  // The group was deleted by someone — leave the view.
+  useEffect(() => {
+    if (removed) navigate('/groups');
+  }, [removed, navigate]);
 
   function buildExtras(form?: FormData) {
     const scheduledFor = scheduleValue ? new Date(scheduleValue).toISOString() : undefined;
@@ -233,6 +240,27 @@ export default function GroupView() {
     }
   }
 
+  async function onDeleteGroup() {
+    if (!group) return;
+    const typed = await prompt({
+      title: 'Delete this group',
+      label: `This permanently deletes all messages and files. Type "${group.name}" to confirm.`,
+      placeholder: group.name,
+      confirmText: 'Delete group',
+    });
+    if (typed == null) return;
+    if (typed.trim() !== group.name) {
+      setError('The name did not match — the group was not deleted.');
+      return;
+    }
+    try {
+      await api.delete(`/groups/${group.id}`, { data: { name: group.name } });
+      navigate('/groups');
+    } catch (err) {
+      setError(extractError(err, 'Could not delete the group'));
+    }
+  }
+
   if (loading) return <div className="space-page"><p className="muted">Loading…</p></div>;
   if (!group)
     return (
@@ -292,6 +320,16 @@ export default function GroupView() {
                 ))}
               </div>
             </>
+          )}
+          {group.isMember && (
+            <div className="members-danger">
+              <button className="btn-danger btn-sm" onClick={onDeleteGroup}>
+                Delete group
+              </button>
+              <span className="muted small">
+                Permanently removes all messages &amp; files for everyone.
+              </span>
+            </div>
           )}
         </div>
       )}

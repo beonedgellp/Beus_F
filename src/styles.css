@@ -1799,6 +1799,15 @@ input {
 .member-row .add-btn {
   margin-left: auto;
 }
+.members-danger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
 
 /* important tag on messages */
 .msg-bubble.important {

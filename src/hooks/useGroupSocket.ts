@@ -11,6 +11,7 @@ export function useGroupSocket(groupId: string | undefined) {
   const socketRef = useRef<ReturnType<typeof createSocket> | null>(null);
   const [incoming, setIncoming] = useState<GroupMessage | null>(null);
   const [deletedId, setDeletedId] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     if (!groupId) return;
@@ -26,6 +27,7 @@ export function useGroupSocket(groupId: string | undefined) {
       if (msg.group === groupId) setIncoming(msg);
     });
     socket.on('group:deleted', ({ id }: { id: string }) => setDeletedId(id));
+    socket.on('group:removed', () => setRemoved(true));
 
     return () => {
       socket.emit('group:unsubscribe', groupId);
@@ -37,5 +39,5 @@ export function useGroupSocket(groupId: string | undefined) {
   const clearIncoming = useCallback(() => setIncoming(null), []);
   const clearDeleted = useCallback(() => setDeletedId(null), []);
 
-  return { connected, incoming, deletedId, clearIncoming, clearDeleted };
+  return { connected, incoming, deletedId, removed, clearIncoming, clearDeleted };
 }
