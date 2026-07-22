@@ -468,14 +468,14 @@ input {
   flex-direction: column;
   gap: 10px;
 }
-/* Left-align the conversation and composer (about 20px from the edges) while
-   the chosen background still fills the full page width. A max-width keeps
-   them from stretching across very large monitors. */
+/* Messages + composer span the full width with the chat-page's ~20px inset:
+   others sit ~20px from the left, your own ~20px from the right. On very wide
+   monitors a large cap (centred) stops them drifting too far apart. */
 .chat-messages,
 .chat-input {
   width: 100%;
-  max-width: 860px;
-  margin-left: 0;
+  max-width: 1400px;
+  margin-left: auto;
   margin-right: auto;
 }
 .msg {
