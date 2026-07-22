@@ -1,13 +1,15 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, extractError } from '../api/client';
+import { usePrompt } from '../context/PromptContext';
 import Avatar from '../components/Avatar';
 import { LABEL_COLOURS } from '../components/UploadForm';
-import { UsersIcon, LockIcon, PlusIcon } from '../components/Icons';
+import { UsersIcon, LockIcon, PlusIcon, TrashIcon } from '../components/Icons';
 import type { Group } from '../api/types';
 
 export default function Groups() {
   const navigate = useNavigate();
+  const prompt = usePrompt();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,6 +31,26 @@ export default function Groups() {
   useEffect(() => {
     void load();
   }, []);
+
+  async function onDeleteGroup(g: Group) {
+    const typed = await prompt({
+      title: 'Delete this group',
+      label: `This permanently deletes all messages and files. Type "${g.name}" to confirm.`,
+      placeholder: g.name,
+      confirmText: 'Delete group',
+    });
+    if (typed == null) return;
+    if (typed.trim() !== g.name) {
+      setError('The name did not match — the group was not deleted.');
+      return;
+    }
+    try {
+      await api.delete(`/groups/${g.id}`, { data: { name: g.name } });
+      setGroups((prev) => prev.filter((x) => x.id !== g.id));
+    } catch (err) {
+      setError(extractError(err, 'Could not delete the group'));
+    }
+  }
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
@@ -109,9 +131,22 @@ export default function Groups() {
               </div>
               <div className="group-actions">
                 {g.isMember ? (
-                  <button className="btn-primary btn-sm" onClick={() => navigate(`/groups/${g.id}`)}>
-                    Open
-                  </button>
+                  <>
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={() => navigate(`/groups/${g.id}`)}
+                    >
+                      Open
+                    </button>
+                    <button
+                      className="icon-btn icon-btn-danger btn-sm"
+                      onClick={() => onDeleteGroup(g)}
+                      title="Delete group"
+                      aria-label="Delete group"
+                    >
+                      <TrashIcon size={15} />
+                    </button>
+                  </>
                 ) : (
                   <span className="group-locked">
                     <LockIcon size={14} /> Ask a member to add you
