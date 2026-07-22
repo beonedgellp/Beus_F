@@ -7,12 +7,14 @@
   --neon: #00ccff;
 
   --bg: #050534;
-  --bg-2: #0a0a52;
-  --panel: #0b0968;
-  --panel-2: #14119c;
-  --panel-3: #1d1abd;
-  --border: rgba(0, 164, 255, 0.22);
-  --border-soft: rgba(0, 164, 255, 0.12);
+  /* muted dark blue-slate surfaces that blend with the navy bg
+     (instead of bright royal-blue boxes) */
+  --bg-2: #0d1730;
+  --panel: #111c36;
+  --panel-2: #1a2742;
+  --panel-3: #253453;
+  --border: rgba(125, 160, 215, 0.18);
+  --border-soft: rgba(125, 160, 215, 0.1);
 
   --text: #eaf3ff;
   --text-dim: #a9c6f0;
@@ -38,8 +40,8 @@
   --success-weak: rgba(0, 217, 192, 0.16);
 
   /* chat bubbles - muted dark blues that blend with the navy background */
-  --bubble-other: #18213f;
-  --bubble-mine: #2c467f;
+  --bubble-other: #182036;
+  --bubble-mine: #2a3a60;
 
   --radius: 10px;
   --radius-sm: 7px;
@@ -336,7 +338,7 @@ input {
   gap: 24px;
   padding: 0 22px;
   height: 62px;
-  background: rgba(6, 6, 62, 0.72);
+  background: rgba(10, 18, 40, 0.85);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -881,7 +883,7 @@ input {
     justify-content: space-around;
     gap: 4px;
     padding: 8px 6px;
-    background: #06063e;
+    background: #0b1329;
     border-top: 1px solid var(--border);
     z-index: 30;
     padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
