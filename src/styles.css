@@ -410,14 +410,14 @@ input {
 .chat-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-soft);
+  justify-content: center;
+  padding-bottom: 10px;
 }
 .chat-header h2 {
   margin: 0;
   font-size: 18px;
   color: var(--gold);
+  text-align: center;
 }
 .status-pill {
   display: inline-flex;
@@ -451,10 +451,12 @@ input {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 4px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: var(--chat-bg, transparent);
+  border-radius: 10px;
 }
 .msg {
   display: flex;
@@ -479,7 +481,7 @@ input {
   font-size: 14px;
 }
 .msg.mine .msg-bubble {
-  background: var(--bubble-mine);
+  background: var(--my-bubble, var(--bubble-mine));
   border-color: transparent;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 4px;
@@ -493,7 +495,7 @@ input {
 /* my messages: crisp white text on the azure bubble */
 .msg.mine .msg-text,
 .msg.mine .msg-caption {
-  color: #fff;
+  color: var(--my-bubble-text, #fff);
 }
 .msg-sender {
   font-size: 12px;
@@ -553,7 +555,8 @@ input {
   color: var(--muted);
 }
 .msg.mine .msg-meta {
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--my-bubble-text, rgba(255, 255, 255, 0.78));
+  opacity: 0.85;
 }
 .msg-bubble.deleted .msg-meta {
   color: var(--muted);
@@ -1071,7 +1074,7 @@ input {
   color: var(--danger-hover);
 }
 .msg.mine .msg-action {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--my-bubble-text, rgba(255, 255, 255, 0.8));
 }
 .msg.mine .msg-action:hover {
   background: rgba(255, 255, 255, 0.2);
@@ -1243,4 +1246,87 @@ input {
 .avatar-option.selected {
   border-color: var(--neon);
   background: var(--primary-weak);
+}
+
+
+/* ============================================================
+   Chat colour picker
+   ============================================================ */
+.composer-tool {
+  position: relative;
+  display: inline-flex;
+}
+.theme-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 268px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  z-index: 50;
+}
+.theme-section {
+  margin-bottom: 12px;
+}
+.theme-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.theme-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+.theme-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.theme-swatch.selected {
+  border-color: #fff;
+}
+.theme-default {
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+}
+.theme-default.selected {
+  border-color: var(--neon);
+  color: var(--neon);
+}
+.theme-color {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.theme-color input[type='color'] {
+  width: 130%;
+  height: 130%;
+  margin: -15%;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.theme-foot {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
 }

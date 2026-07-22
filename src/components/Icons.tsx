@@ -124,6 +124,17 @@ export function FileIcon(props: IconProps) {
   );
 }
 
+export function PaletteIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} aria-hidden="true">
+      <path d="M12 3a9 9 0 1 0 0 18 2.4 2.4 0 0 0 2.4-2.4c0-.62-.24-1.18-.63-1.6a2.36 2.36 0 0 1 1.67-4.03H17a4 4 0 0 0 4-4C21 5.5 17 3 12 3z" />
+      <circle cx="7.5" cy="10.5" r="1" />
+      <circle cx="10.5" cy="7.5" r="1" />
+      <circle cx="14.5" cy="7.5" r="1" />
+    </svg>
+  );
+}
+
 export function SmileIcon(props: IconProps) {
   return (
     <svg {...base(props)} aria-hidden="true">

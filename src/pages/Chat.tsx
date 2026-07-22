@@ -3,10 +3,12 @@ import { useChatSocket } from '../hooks/useChatSocket';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { api, downloadFile, extractError } from '../api/client';
+import { CSSProperties } from 'react';
 import AuthImage from '../components/AuthImage';
 import AuthMedia from '../components/AuthMedia';
 import Avatar from '../components/Avatar';
 import EmojiPicker from '../components/EmojiPicker';
+import ChatThemePicker from '../components/ChatThemePicker';
 import {
   PaperclipIcon,
   ClipboardIcon,
@@ -16,9 +18,11 @@ import {
   FileIcon,
   DownloadIcon,
   MoveToCollectiveIcon,
+  PaletteIcon,
 } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
 import { renderWithLinks } from '../utils/linkify';
+import { contrastText } from '../utils/color';
 import type { ChatMessage } from '../api/types';
 
 export default function Chat() {
@@ -30,13 +34,56 @@ export default function Chat() {
   const [notice, setNotice] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
   const [saveMenu, setSaveMenu] = useState<string | null>(null);
+  const [chatBg, setChatBg] = useState('');
+  const [myBubble, setMyBubble] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load this user's saved chat colour preferences.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = localStorage.getItem(`beus_chatprefs_${user.id}`);
+      if (raw) {
+        const p = JSON.parse(raw);
+        setChatBg(p.bg || '');
+        setMyBubble(p.bubble || '');
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [user?.id]);
+
+  function persistPrefs(bg: string, bubble: string) {
+    if (!user) return;
+    localStorage.setItem(`beus_chatprefs_${user.id}`, JSON.stringify({ bg, bubble }));
+  }
+  function changeBg(c: string) {
+    setChatBg(c);
+    persistPrefs(c, myBubble);
+  }
+  function changeBubble(c: string) {
+    setMyBubble(c);
+    persistPrefs(chatBg, c);
+  }
+  function resetTheme() {
+    setChatBg('');
+    setMyBubble('');
+    persistPrefs('', '');
+  }
+
+  const chatStyle: CSSProperties = {};
+  if (chatBg) (chatStyle as Record<string, string>)['--chat-bg'] = chatBg;
+  if (myBubble) {
+    (chatStyle as Record<string, string>)['--my-bubble'] = myBubble;
+    (chatStyle as Record<string, string>)['--my-bubble-text'] = contrastText(myBubble);
+  }
 
   function flash(message: string) {
     setNotice(message);
@@ -158,13 +205,9 @@ export default function Chat() {
   }
 
   return (
-    <div className="chat-page">
+    <div className="chat-page" style={chatStyle}>
       <div className="chat-header">
         <h2>Team chat</h2>
-        <span className={`status-pill ${connected ? 'online' : 'offline'}`}>
-          <span className="dot" />
-          {connected ? 'Connected' : 'Connecting…'}
-        </span>
       </div>
 
       {error && <div className="alert-error">{error}</div>}
@@ -323,6 +366,27 @@ export default function Chat() {
         >
           <ClipboardIcon />
         </button>
+        <span className="composer-tool">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setShowTheme((s) => !s)}
+            title="Chat colours"
+            aria-label="Chat colours"
+          >
+            <PaletteIcon />
+          </button>
+          {showTheme && (
+            <ChatThemePicker
+              bg={chatBg}
+              bubble={myBubble}
+              onChangeBg={changeBg}
+              onChangeBubble={changeBubble}
+              onReset={resetTheme}
+              onClose={() => setShowTheme(false)}
+            />
+          )}
+        </span>
         <button type="submit" className="btn-primary btn-icon" disabled={!connected || uploading}>
           <SendIcon size={16} />
           <span className="btn-icon-label">{uploading ? 'Sending…' : 'Send'}</span>
