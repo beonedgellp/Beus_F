@@ -993,10 +993,21 @@ input {
   }
 
   .chat-input {
-    gap: 6px;
+    gap: 5px;
   }
   .chat-input input[type='text'] {
     padding: 11px;
+  }
+  /* free up room in the composer: show only the Send icon, tighten buttons */
+  .chat-input .btn-icon-label {
+    display: none;
+  }
+  .chat-input .btn-primary.btn-icon {
+    padding: 10px 12px;
+  }
+  .chat-input .icon-btn {
+    width: 32px;
+    height: 32px;
   }
 }
 
@@ -1261,6 +1272,7 @@ input {
   bottom: calc(100% + 8px);
   right: 0;
   width: 268px;
+  max-width: calc(100vw - 28px);
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
