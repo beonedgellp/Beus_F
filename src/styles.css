@@ -531,6 +531,18 @@ input {
   margin-top: 5px;
   font-size: 14px;
 }
+/* clickable links inside messages */
+.msg-link {
+  color: #7cc4ff;
+  text-decoration: underline;
+  word-break: break-all;
+}
+.msg-link:hover {
+  color: var(--neon);
+}
+.msg.mine .msg-link {
+  color: #bfe0ff;
+}
 .msg-meta {
   display: flex;
   gap: 8px;

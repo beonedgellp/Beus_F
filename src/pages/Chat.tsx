@@ -18,6 +18,7 @@ import {
   MoveToCollectiveIcon,
 } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
+import { renderWithLinks } from '../utils/linkify';
 import type { ChatMessage } from '../api/types';
 
 export default function Chat() {
@@ -194,17 +195,17 @@ export default function Chat() {
                 ) : m.kind === 'image' && m.fileId ? (
                   <div className="msg-image">
                     <AuthImage path={`/chat/file/${m.fileId}`} alt={m.fileName} />
-                    {m.text && <div className="msg-caption">{m.text}</div>}
+                    {m.text && <div className="msg-caption">{renderWithLinks(m.text)}</div>}
                   </div>
                 ) : m.kind === 'video' && m.fileId ? (
                   <div className="msg-media">
                     <AuthMedia path={`/chat/file/${m.fileId}`} kind="video" className="msg-video" />
-                    {m.text && <div className="msg-caption">{m.text}</div>}
+                    {m.text && <div className="msg-caption">{renderWithLinks(m.text)}</div>}
                   </div>
                 ) : m.kind === 'audio' && m.fileId ? (
                   <div className="msg-media">
                     <AuthMedia path={`/chat/file/${m.fileId}`} kind="audio" className="msg-audio" />
-                    {m.text && <div className="msg-caption">{m.text}</div>}
+                    {m.text && <div className="msg-caption">{renderWithLinks(m.text)}</div>}
                   </div>
                 ) : m.kind === 'file' && m.fileId ? (
                   <div className="file-chip">
@@ -227,7 +228,7 @@ export default function Chat() {
                     </button>
                   </div>
                 ) : (
-                  <div className="msg-text">{m.text}</div>
+                  <div className="msg-text">{renderWithLinks(m.text || '')}</div>
                 )}
 
                 <div className="msg-meta">
