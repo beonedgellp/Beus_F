@@ -6,6 +6,8 @@ export interface User {
   avatar?: string;
   avatarColor?: string;
   bio?: string;
+  chatBg?: string;
+  chatBubble?: string;
 }
 
 export interface Member {

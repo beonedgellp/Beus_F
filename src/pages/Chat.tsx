@@ -26,7 +26,7 @@ import { contrastText } from '../utils/color';
 import type { ChatMessage } from '../api/types';
 
 export default function Chat() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const confirm = useConfirm();
   const { messages, connected, error, sendText, deleteMessage, appendLocal } = useChatSocket();
   const [text, setText] = useState('');
@@ -45,37 +45,29 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load this user's saved chat colour preferences.
+  // Chat colour preferences live on the user's profile, so they follow the
+  // user across devices.
   useEffect(() => {
-    if (!user) return;
-    try {
-      const raw = localStorage.getItem(`beus_chatprefs_${user.id}`);
-      if (raw) {
-        const p = JSON.parse(raw);
-        setChatBg(p.bg || '');
-        setMyBubble(p.bubble || '');
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [user?.id]);
+    setChatBg(user?.chatBg || '');
+    setMyBubble(user?.chatBubble || '');
+  }, [user?.id, user?.chatBg, user?.chatBubble]);
 
-  function persistPrefs(bg: string, bubble: string) {
-    if (!user) return;
-    localStorage.setItem(`beus_chatprefs_${user.id}`, JSON.stringify({ bg, bubble }));
+  function saveColors(bg: string, bubble: string) {
+    updateUser({ chatBg: bg, chatBubble: bubble });
+    api.patch('/profile', { chatBg: bg, chatBubble: bubble }).catch(() => undefined);
   }
   function changeBg(c: string) {
     setChatBg(c);
-    persistPrefs(c, myBubble);
+    saveColors(c, myBubble);
   }
   function changeBubble(c: string) {
     setMyBubble(c);
-    persistPrefs(chatBg, c);
+    saveColors(chatBg, c);
   }
   function resetTheme() {
     setChatBg('');
     setMyBubble('');
-    persistPrefs('', '');
+    saveColors('', '');
   }
 
   const chatStyle: CSSProperties = {};

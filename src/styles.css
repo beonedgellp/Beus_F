@@ -1022,6 +1022,39 @@ input {
   }
 }
 
+/* Landscape phones / short viewports: reclaim vertical space */
+@media (max-height: 480px) and (orientation: landscape) {
+  .topbar {
+    height: 48px;
+  }
+  .content {
+    padding: 12px;
+  }
+  .chat-messages {
+    padding: 10px 10px;
+  }
+  .chat-header {
+    padding-bottom: 6px;
+  }
+}
+
+/* Large desktops: use more of the width */
+@media (min-width: 1440px) {
+  .content {
+    max-width: 1240px;
+  }
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* Ultra-wide: cap so lines don't get uncomfortably long */
+@media (min-width: 1920px) {
+  .content {
+    max-width: 1400px;
+  }
+}
+
 
 /* ============================================================
    Avatars, profile, emoji, attachments
