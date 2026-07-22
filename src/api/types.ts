@@ -54,6 +54,14 @@ export interface ChatMessage {
   mimeType?: string;
   size?: number;
   deleted: boolean;
+  reply?: {
+    id: string;
+    senderName: string;
+    kind: 'text' | 'image' | 'video' | 'audio' | 'file';
+    deleted: boolean;
+    text?: string;
+    fileName?: string;
+  };
   createdAt: string;
 }
 

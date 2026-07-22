@@ -106,6 +106,15 @@ export function CopyIcon(props: IconProps) {
   );
 }
 
+export function EditIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </svg>
+  );
+}
+
 export function SearchIcon(props: IconProps) {
   return (
     <svg {...base(props)} aria-hidden="true">
@@ -131,6 +140,15 @@ export function PaletteIcon(props: IconProps) {
       <circle cx="7.5" cy="10.5" r="1" />
       <circle cx="10.5" cy="7.5" r="1" />
       <circle cx="14.5" cy="7.5" r="1" />
+    </svg>
+  );
+}
+
+export function ReplyIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} aria-hidden="true">
+      <path d="M9 17l-5-5 5-5" />
+      <path d="M4 12h11a5 5 0 0 1 5 5v2" />
     </svg>
   );
 }

@@ -19,6 +19,7 @@ import {
   DownloadIcon,
   MoveToCollectiveIcon,
   PaletteIcon,
+  ReplyIcon,
 } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
 import { renderWithLinks } from '../utils/linkify';
@@ -38,8 +39,19 @@ export default function Chat() {
   const [saveMenu, setSaveMenu] = useState<string | null>(null);
   const [chatBg, setChatBg] = useState('');
   const [myBubble, setMyBubble] = useState('');
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  function replyPreview(m: ChatMessage): string {
+    if (m.deleted) return 'deleted message';
+    return m.text || m.fileName || (m.kind === 'text' ? '' : m.kind);
+  }
+  function startReply(m: ChatMessage) {
+    setReplyingTo(m);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,8 +100,10 @@ export default function Chat() {
     if (!value) return;
     setSendError('');
     setText('');
+    const replyId = replyingTo?.id;
+    setReplyingTo(null);
     try {
-      await sendText(value);
+      await sendText(value, replyId);
     } catch (err) {
       setSendError(extractError(err, 'Failed to send'));
       setText(value);
@@ -103,8 +117,10 @@ export default function Chat() {
     try {
       const form = new FormData();
       form.append('file', file);
+      if (replyingTo) form.append('replyTo', replyingTo.id);
       const res = await api.post<ChatMessage>('/chat/attachment', form);
       appendLocal(res.data);
+      setReplyingTo(null);
     } catch (err) {
       setSendError(extractError(err, 'Failed to send attachment'));
     } finally {
@@ -212,6 +228,12 @@ export default function Chat() {
         {messages.map((m) => {
           const mine = m.sender.id === user?.id;
           const hasFile = !m.deleted && !!m.fileId;
+          const hasMedia = !m.deleted && (m.kind === 'image' || m.kind === 'video');
+          // Messages can only be deleted within 3 hours of sending.
+          const canDelete =
+            mine &&
+            !m.deleted &&
+            Date.now() - new Date(m.createdAt).getTime() <= 3 * 60 * 60 * 1000;
           return (
             <div key={m.id} className={`msg ${mine ? 'mine' : ''}`}>
               {!mine && (
@@ -223,8 +245,20 @@ export default function Chat() {
                   className="msg-avatar"
                 />
               )}
-              <div className={`msg-bubble ${m.deleted ? 'deleted' : ''}`}>
+              <div
+                className={`msg-bubble ${m.deleted ? 'deleted' : ''} ${hasMedia ? 'has-media' : ''}`}
+              >
                 {!mine && !m.deleted && <div className="msg-sender">{m.sender.name}</div>}
+                {!m.deleted && m.reply && (
+                  <div className="msg-quote">
+                    <span className="msg-quote-author">{m.reply.senderName}</span>
+                    <span className="msg-quote-text">
+                      {m.reply.deleted
+                        ? 'deleted message'
+                        : m.reply.text || m.reply.fileName || m.reply.kind}
+                    </span>
+                  </div>
+                )}
                 {m.deleted ? (
                   <em className="msg-deleted">This message was deleted</em>
                 ) : m.kind === 'image' && m.fileId ? (
@@ -234,7 +268,13 @@ export default function Chat() {
                   </div>
                 ) : m.kind === 'video' && m.fileId ? (
                   <div className="msg-media">
-                    <AuthMedia path={`/chat/file/${m.fileId}`} kind="video" className="msg-video" />
+                    <div className="video-resize" title="Drag the bottom-right corner to resize">
+                      <AuthMedia
+                        path={`/chat/file/${m.fileId}`}
+                        kind="video"
+                        className="msg-video"
+                      />
+                    </div>
                     {m.text && <div className="msg-caption">{renderWithLinks(m.text)}</div>}
                   </div>
                 ) : m.kind === 'audio' && m.fileId ? (
@@ -268,6 +308,16 @@ export default function Chat() {
 
                 <div className="msg-meta">
                   <span className="msg-time">{formatTime(m.createdAt)}</span>
+                  {!m.deleted && (
+                    <button
+                      className="msg-action"
+                      onClick={() => startReply(m)}
+                      title="Reply"
+                      aria-label="Reply"
+                    >
+                      <ReplyIcon size={14} />
+                    </button>
+                  )}
                   {hasFile && (
                     <span className="save-wrap">
                       <button
@@ -290,7 +340,7 @@ export default function Chat() {
                       )}
                     </span>
                   )}
-                  {mine && !m.deleted && (
+                  {canDelete && (
                     <button
                       className="msg-action msg-action-danger"
                       onClick={() => onDelete(m.id)}
@@ -310,9 +360,29 @@ export default function Chat() {
 
       {sendError && <div className="alert-error">{sendError}</div>}
 
+      {replyingTo && (
+        <div className="reply-bar">
+          <span className="reply-bar-accent" />
+          <div className="reply-bar-info">
+            <span className="reply-bar-label">Replying to {replyingTo.sender.name}</span>
+            <span className="reply-bar-text">{replyPreview(replyingTo)}</span>
+          </div>
+          <button
+            type="button"
+            className="icon-btn btn-sm"
+            onClick={() => setReplyingTo(null)}
+            title="Cancel reply"
+            aria-label="Cancel reply"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <form className="chat-input" onSubmit={onSend}>
         <div className="chat-input-field">
           <input
+            ref={inputRef}
             type="text"
             placeholder="Type a message, or paste an image…"
             value={text}

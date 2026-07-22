@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api, downloadFile, extractError } from '../api/client';
 import { useConfirm } from '../context/ConfirmContext';
+import { usePrompt } from '../context/PromptContext';
+import { renameFileName } from '../utils/rename';
 import UploadForm, { UploadPayload, LABEL_COLOURS } from '../components/UploadForm';
 import {
   DownloadIcon,
@@ -10,6 +12,7 @@ import {
   CopyIcon,
   RevokeIcon,
   SearchIcon,
+  EditIcon,
 } from '../components/Icons';
 import { formatBytes, formatDate, formatTime } from '../utils/format';
 import { contrastText } from '../utils/color';
@@ -17,12 +20,14 @@ import type { FileItem, ShareLinkDto } from '../api/types';
 
 export default function Personal() {
   const confirm = useConfirm();
+  const prompt = usePrompt();
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
+  const [colorFilter, setColorFilter] = useState<string | null>(null);
   const [openShares, setOpenShares] = useState<string | null>(null);
   const [shares, setShares] = useState<Record<string, ShareLinkDto[]>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -89,6 +94,20 @@ export default function Personal() {
       await downloadFile(`/personal/${item.id}/download`, item.fileName);
     } catch (err) {
       setError(extractError(err, 'Download failed'));
+    }
+  }
+
+  async function onRename(item: FileItem) {
+    const result = await renameFileName(prompt, item.fileName);
+    if (!result) return;
+    try {
+      const res = await api.patch<FileItem>(`/personal/${item.id}`, {
+        fileName: result.fileName,
+        heading: result.heading,
+      });
+      setItems((prev) => prev.map((i) => (i.id === item.id ? res.data : i)));
+    } catch (err) {
+      setError(extractError(err, 'Rename failed'));
     }
   }
 
@@ -187,13 +206,14 @@ export default function Personal() {
   }
 
   const q = search.trim().toLowerCase();
-  const visible = q
-    ? items.filter(
-        (i) =>
-          i.fileName.toLowerCase().includes(q) ||
-          (i.label?.heading || '').toLowerCase().includes(q),
-      )
-    : items;
+  const usedColors = Array.from(new Set(items.map((i) => i.label.colour)));
+  const visible = items.filter((i) => {
+    if (colorFilter && i.label.colour !== colorFilter) return false;
+    if (!q) return true;
+    return (
+      i.fileName.toLowerCase().includes(q) || (i.label?.heading || '').toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="space-page">
@@ -226,12 +246,33 @@ export default function Personal() {
         </div>
       )}
 
+      {!loading && usedColors.length > 1 && (
+        <div className="filter-colors">
+          <span className="filter-colors-label">Filter by colour:</span>
+          <button
+            className={`filter-color-all ${!colorFilter ? 'selected' : ''}`}
+            onClick={() => setColorFilter(null)}
+          >
+            All
+          </button>
+          {usedColors.map((c) => (
+            <button
+              key={c}
+              className={`filter-swatch ${colorFilter === c ? 'selected' : ''}`}
+              style={{ background: c }}
+              onClick={() => setColorFilter(colorFilter === c ? null : c)}
+              aria-label={`filter colour ${c}`}
+            />
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <p className="muted">Loading…</p>
       ) : items.length === 0 ? (
         <p className="muted">No personal files yet.</p>
       ) : visible.length === 0 ? (
-        <p className="muted">No files match “{search}”.</p>
+        <p className="muted">No files match your search or colour filter.</p>
       ) : (
         <div className="file-grid">
           {visible.map((item) => (
@@ -268,6 +309,14 @@ export default function Personal() {
                   aria-label="Share links"
                 >
                   <ShareIcon size={17} />
+                </button>
+                <button
+                  className="icon-btn"
+                  onClick={() => onRename(item)}
+                  title="Rename"
+                  aria-label="Rename"
+                >
+                  <EditIcon size={16} />
                 </button>
                 <button
                   className="btn-ghost btn-icon"
