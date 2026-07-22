@@ -45,7 +45,7 @@ export interface ShareLinkDto {
 export interface ChatMessage {
   id: string;
   sender: { id: string; name: string; avatar?: string; avatarColor?: string };
-  kind: 'text' | 'image' | 'file';
+  kind: 'text' | 'image' | 'video' | 'audio' | 'file';
   text?: string;
   fileId?: string;
   fileName?: string;

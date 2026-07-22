@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { api, downloadFile, extractError } from '../api/client';
 import AuthImage from '../components/AuthImage';
+import AuthMedia from '../components/AuthMedia';
 import Avatar from '../components/Avatar';
 import EmojiPicker from '../components/EmojiPicker';
 import {
@@ -193,6 +194,16 @@ export default function Chat() {
                 ) : m.kind === 'image' && m.fileId ? (
                   <div className="msg-image">
                     <AuthImage path={`/chat/file/${m.fileId}`} alt={m.fileName} />
+                    {m.text && <div className="msg-caption">{m.text}</div>}
+                  </div>
+                ) : m.kind === 'video' && m.fileId ? (
+                  <div className="msg-media">
+                    <AuthMedia path={`/chat/file/${m.fileId}`} kind="video" className="msg-video" />
+                    {m.text && <div className="msg-caption">{m.text}</div>}
+                  </div>
+                ) : m.kind === 'audio' && m.fileId ? (
+                  <div className="msg-media">
+                    <AuthMedia path={`/chat/file/${m.fileId}`} kind="audio" className="msg-audio" />
                     {m.text && <div className="msg-caption">{m.text}</div>}
                   </div>
                 ) : m.kind === 'file' && m.fileId ? (

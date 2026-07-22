@@ -516,6 +516,17 @@ input {
   border-radius: 10px;
   display: block;
 }
+.msg-video {
+  max-width: min(340px, 100%);
+  max-height: 300px;
+  border-radius: 10px;
+  display: block;
+  background: #000;
+}
+.msg-audio {
+  width: min(280px, 60vw);
+  display: block;
+}
 .msg-caption {
   margin-top: 5px;
   font-size: 14px;
