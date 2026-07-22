@@ -28,6 +28,7 @@ import {
   MoveToCollectiveIcon,
   PaletteIcon,
   ReplyIcon,
+  ClockIcon,
 } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
 import { renderWithLinks } from '../utils/linkify';
@@ -48,6 +49,9 @@ export default function Chat() {
   const [chatBg, setChatBg] = useState('');
   const [myBubble, setMyBubble] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [scheduleValue, setScheduleValue] = useState('');
+  const [showSchedule, setShowSchedule] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -109,33 +113,34 @@ export default function Chat() {
     setTimeout(() => setNotice((n) => (n === message ? '' : n)), 2500);
   }
 
-  async function onSend(e: FormEvent) {
-    e.preventDefault();
-    const value = text.trim();
-    if (!value) return;
-    setSendError('');
-    setText('');
-    const replyId = replyingTo?.id;
-    setReplyingTo(null);
-    try {
-      await sendText(value, replyId);
-    } catch (err) {
-      setSendError(extractError(err, 'Failed to send'));
-      setText(value);
-    }
+  function scheduledIso(): string | undefined {
+    return scheduleValue ? new Date(scheduleValue).toISOString() : undefined;
   }
 
-  /** Upload any file (image or document) as a chat attachment. */
-  async function uploadAttachment(file: File) {
+  /** Upload the staged file (only when the user presses Send). */
+  async function uploadPending() {
+    if (!pendingFile) return;
     setUploading(true);
     setSendError('');
     try {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', pendingFile);
+      const caption = text.trim();
+      if (caption) form.append('caption', caption);
       if (replyingTo) form.append('replyTo', replyingTo.id);
-      const res = await api.post<ChatMessage>('/chat/attachment', form);
-      appendLocal(res.data);
+      const iso = scheduledIso();
+      if (iso) form.append('scheduledFor', iso);
+      const res = await api.post<ChatMessage & { scheduled?: boolean }>('/chat/attachment', form);
+      if ((res.data as { scheduled?: boolean }).scheduled) {
+        flash('Scheduled — it will be sent at the set time.');
+      } else {
+        appendLocal(res.data);
+      }
+      setPendingFile(null);
+      setText('');
       setReplyingTo(null);
+      setScheduleValue('');
+      setShowSchedule(false);
     } catch (err) {
       setSendError(extractError(err, 'Failed to send attachment'));
     } finally {
@@ -144,13 +149,39 @@ export default function Chat() {
     }
   }
 
-  async function onPickFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) await uploadAttachment(file);
+  async function onSend(e: FormEvent) {
+    e.preventDefault();
+    if (pendingFile) {
+      await uploadPending();
+      return;
+    }
+    const value = text.trim();
+    if (!value) return;
+    setSendError('');
+    setText('');
+    const replyId = replyingTo?.id;
+    setReplyingTo(null);
+    const iso = scheduledIso();
+    setScheduleValue('');
+    setShowSchedule(false);
+    try {
+      const res = await sendText(value, replyId, iso);
+      if (res?.scheduled) flash('Scheduled — it will be sent at the set time.');
+    } catch (err) {
+      setSendError(extractError(err, 'Failed to send'));
+      setText(value);
+    }
   }
 
-  /** Paste an image straight into the message box (Ctrl/Cmd+V). */
-  async function onPaste(e: ClipboardEvent<HTMLInputElement>) {
+  /** Selecting a file only stages it; it's sent when the user presses Send. */
+  function onPickFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setPendingFile(file);
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
+  /** Paste an image into the box (Ctrl/Cmd+V) - staged, not auto-sent. */
+  function onPaste(e: ClipboardEvent<HTMLInputElement>) {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
@@ -159,14 +190,14 @@ export default function Chat() {
         const file = item.getAsFile();
         if (file) {
           e.preventDefault();
-          await uploadAttachment(file);
+          setPendingFile(file);
           return;
         }
       }
     }
   }
 
-  /** Explicit "paste from clipboard" button (uses the async Clipboard API). */
+  /** Explicit "paste from clipboard" button - stages the image. */
   async function onPasteButton() {
     setSendError('');
     try {
@@ -176,7 +207,7 @@ export default function Chat() {
         if (imageType) {
           const blob = await clip.getType(imageType);
           const ext = imageType.split('/')[1] || 'png';
-          await uploadAttachment(new File([blob], `pasted-${Date.now()}.${ext}`, { type: imageType }));
+          setPendingFile(new File([blob], `pasted-${Date.now()}.${ext}`, { type: imageType }));
           return;
         }
       }
@@ -394,6 +425,42 @@ export default function Chat() {
         </div>
       )}
 
+      {pendingFile && (
+        <div className="pending-file">
+          <span className="file-chip-icon">
+            <FileIcon size={18} />
+          </span>
+          <div className="file-chip-info">
+            <div className="file-chip-name" title={pendingFile.name}>
+              {pendingFile.name}
+            </div>
+            <div className="file-chip-size">
+              {formatBytes(pendingFile.size)} · press Send to share
+            </div>
+          </div>
+          <button
+            type="button"
+            className="icon-btn btn-sm"
+            onClick={() => setPendingFile(null)}
+            title="Remove file"
+            aria-label="Remove file"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {scheduleValue && (
+        <div className="composer-flags">
+          <span className="flag-chip">
+            <ClockIcon size={12} /> Sends {formatTime(new Date(scheduleValue).toISOString())}
+            <button onClick={() => setScheduleValue('')} aria-label="Cancel schedule">
+              ✕
+            </button>
+          </span>
+        </div>
+      )}
+
       <form className="chat-input" onSubmit={onSend}>
         <div className="chat-input-field">
           <input
@@ -449,6 +516,46 @@ export default function Chat() {
         <span className="composer-tool">
           <button
             type="button"
+            className={`icon-btn ${scheduleValue ? 'active-imp' : ''}`}
+            onClick={() => setShowSchedule((s) => !s)}
+            title="Schedule / timer message"
+            aria-label="Schedule message"
+          >
+            <ClockIcon />
+          </button>
+          {showSchedule && (
+            <div className="schedule-popover">
+              <div className="schedule-title">Send later</div>
+              <input
+                type="datetime-local"
+                value={scheduleValue}
+                onChange={(e) => setScheduleValue(e.target.value)}
+              />
+              <div className="schedule-actions">
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm"
+                  onClick={() => {
+                    setScheduleValue('');
+                    setShowSchedule(false);
+                  }}
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary btn-sm"
+                  onClick={() => setShowSchedule(false)}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
+        </span>
+        <span className="composer-tool">
+          <button
+            type="button"
             className="icon-btn"
             onClick={() => setShowTheme((s) => !s)}
             title="Chat colours"
@@ -467,7 +574,11 @@ export default function Chat() {
             />
           )}
         </span>
-        <button type="submit" className="btn-primary btn-icon" disabled={!connected || uploading}>
+        <button
+          type="submit"
+          className="btn-primary btn-icon"
+          disabled={!connected || uploading || (!pendingFile && !text.trim())}
+        >
           <SendIcon size={16} />
           <span className="btn-icon-label">{uploading ? 'Sending…' : 'Send'}</span>
         </button>

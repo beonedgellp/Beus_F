@@ -55,6 +55,7 @@ export default function GroupView() {
 
   const [showMembers, setShowMembers] = useState(false);
   const [allUsers, setAllUsers] = useState<Member[]>([]);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,10 +131,15 @@ export default function GroupView() {
     setScheduleValue('');
     setReplyingTo(null);
     setShowSchedule(false);
+    setPendingFile(null);
   }
 
   async function sendMessage(e: FormEvent) {
     e.preventDefault();
+    if (pendingFile) {
+      await uploadPending();
+      return;
+    }
     const value = text.trim();
     if (!value) return;
     setSendError('');
@@ -152,15 +158,20 @@ export default function GroupView() {
     }
   }
 
-  async function uploadAttachment(file: File) {
+  /** Upload the staged file when the user presses Send. */
+  async function uploadPending() {
+    if (!pendingFile) return;
     setUploading(true);
     setSendError('');
     try {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', pendingFile);
+      const caption = text.trim();
+      if (caption) form.append('caption', caption);
       buildExtras(form);
       const res = await api.post<{ scheduled?: boolean }>(`/groups/${id}/attachment`, form);
       if (res.data?.scheduled) flash('File scheduled — it will be sent later and marked important.');
+      setText('');
       resetComposerFlags();
     } catch (err) {
       setSendError(extractError(err, 'Failed to send file'));
@@ -170,12 +181,14 @@ export default function GroupView() {
     }
   }
 
+  /** Selecting a file only stages it; it's sent when the user presses Send. */
   function onPickFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) void uploadAttachment(file);
+    if (file) setPendingFile(file);
+    if (fileRef.current) fileRef.current.value = '';
   }
 
-  async function onPaste(e: ClipboardEvent<HTMLInputElement>) {
+  function onPaste(e: ClipboardEvent<HTMLInputElement>) {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
@@ -183,7 +196,7 @@ export default function GroupView() {
         const f = items[i].getAsFile();
         if (f) {
           e.preventDefault();
-          await uploadAttachment(f);
+          setPendingFile(f);
           return;
         }
       }
@@ -466,6 +479,31 @@ export default function GroupView() {
             </div>
           )}
 
+          {pendingFile && (
+            <div className="pending-file">
+              <span className="file-chip-icon">
+                <FileIcon size={18} />
+              </span>
+              <div className="file-chip-info">
+                <div className="file-chip-name" title={pendingFile.name}>
+                  {pendingFile.name}
+                </div>
+                <div className="file-chip-size">
+                  {formatBytes(pendingFile.size)} · press Send to share
+                </div>
+              </div>
+              <button
+                type="button"
+                className="icon-btn btn-sm"
+                onClick={() => setPendingFile(null)}
+                title="Remove file"
+                aria-label="Remove file"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           <form className="chat-input" onSubmit={sendMessage}>
             <div className="chat-input-field">
               <input
@@ -542,7 +580,11 @@ export default function GroupView() {
                 </div>
               )}
             </span>
-            <button type="submit" className="btn-primary btn-icon" disabled={uploading}>
+            <button
+              type="submit"
+              className="btn-primary btn-icon"
+              disabled={uploading || (!pendingFile && !text.trim())}
+            >
               <SendIcon size={16} />
               <span className="btn-icon-label">{uploading ? 'Sending…' : 'Send'}</span>
             </button>

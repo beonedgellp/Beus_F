@@ -1464,6 +1464,26 @@ input {
   max-width: 260px;
 }
 
+/* staged file waiting to be sent */
+.pending-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+.pending-file .file-chip-info {
+  flex: 1;
+  min-width: 0;
+}
+
 /* reply composer bar */
 .reply-bar {
   display: flex;
@@ -1741,6 +1761,7 @@ input {
 }
 .group-view .reply-bar,
 .group-view .composer-flags,
+.group-view .pending-file,
 .group-view .chat-input {
   max-width: 1000px;
   margin-left: auto;

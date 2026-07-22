@@ -53,14 +53,18 @@ export function useChatSocket() {
     };
   }, []);
 
-  const sendText = useCallback((text: string, replyTo?: string) => {
-    return new Promise<void>((resolve, reject) => {
+  const sendText = useCallback((text: string, replyTo?: string, scheduledFor?: string) => {
+    return new Promise<{ scheduled?: boolean }>((resolve, reject) => {
       const socket = socketRef.current;
       if (!socket) return reject(new Error('Not connected'));
-      socket.emit('chat:send', { text, replyTo }, (res: { ok?: boolean; error?: string }) => {
-        if (res?.error) reject(new Error(res.error));
-        else resolve();
-      });
+      socket.emit(
+        'chat:send',
+        { text, replyTo, scheduledFor },
+        (res: { ok?: boolean; error?: string; scheduled?: boolean }) => {
+          if (res?.error) reject(new Error(res.error));
+          else resolve({ scheduled: res?.scheduled });
+        },
+      );
     });
   }, []);
 
