@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, downloadFile, extractError } from '../api/client';
 import { useConfirm } from '../context/ConfirmContext';
 import UploadForm, { UploadPayload } from '../components/UploadForm';
-import { DownloadIcon, TrashIcon } from '../components/Icons';
+import { DownloadIcon, TrashIcon, SearchIcon } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
 import { contrastText } from '../utils/color';
 import type { FileItem } from '../api/types';
@@ -13,6 +13,7 @@ export default function Collective() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
   async function load() {
     try {
@@ -74,6 +75,15 @@ export default function Collective() {
     }
   }
 
+  const q = search.trim().toLowerCase();
+  const visible = q
+    ? items.filter(
+        (i) =>
+          i.fileName.toLowerCase().includes(q) ||
+          (i.label?.heading || '').toLowerCase().includes(q),
+      )
+    : items;
+
   return (
     <div className="space-page">
       <div className="space-header">
@@ -87,19 +97,38 @@ export default function Collective() {
 
       {error && <div className="alert-error">{error}</div>}
 
+      {!loading && items.length > 0 && (
+        <div className="search-bar">
+          <span className="search-icon">
+            <SearchIcon size={16} />
+          </span>
+          <input
+            className="search-input"
+            type="search"
+            placeholder="Search files by name or label…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       {loading ? (
         <p className="muted">Loading…</p>
       ) : items.length === 0 ? (
         <p className="muted">No files yet. Upload the first one above.</p>
+      ) : visible.length === 0 ? (
+        <p className="muted">No files match “{search}”.</p>
       ) : (
         <div className="file-grid">
-          {items.map((item) => (
-            <div className="file-card" key={item.id}>
-              <div
-                className="file-label"
-                style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
-              >
-                {item.label.heading}
+          {visible.map((item) => (
+            <div className="file-card" key={item.id} style={{ borderLeftColor: item.label.colour }}>
+              <div className="file-card-head">
+                <span
+                  className="label-tag"
+                  style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
+                >
+                  {item.label.heading}
+                </span>
               </div>
               <div className="file-body">
                 <div className="file-name" title={item.fileName}>

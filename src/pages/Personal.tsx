@@ -9,6 +9,7 @@ import {
   MoveToCollectiveIcon,
   CopyIcon,
   RevokeIcon,
+  SearchIcon,
 } from '../components/Icons';
 import { formatBytes, formatDate, formatTime } from '../utils/format';
 import { contrastText } from '../utils/color';
@@ -21,6 +22,7 @@ export default function Personal() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
   const [openShares, setOpenShares] = useState<string | null>(null);
   const [shares, setShares] = useState<Record<string, ShareLinkDto[]>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -184,6 +186,15 @@ export default function Personal() {
     }
   }
 
+  const q = search.trim().toLowerCase();
+  const visible = q
+    ? items.filter(
+        (i) =>
+          i.fileName.toLowerCase().includes(q) ||
+          (i.label?.heading || '').toLowerCase().includes(q),
+      )
+    : items;
+
   return (
     <div className="space-page">
       <div className="space-header">
@@ -200,19 +211,38 @@ export default function Personal() {
       {notice && <div className="alert-success">{notice}</div>}
       {error && <div className="alert-error">{error}</div>}
 
+      {!loading && items.length > 0 && (
+        <div className="search-bar">
+          <span className="search-icon">
+            <SearchIcon size={16} />
+          </span>
+          <input
+            className="search-input"
+            type="search"
+            placeholder="Search your files by name or label…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       {loading ? (
         <p className="muted">Loading…</p>
       ) : items.length === 0 ? (
         <p className="muted">No personal files yet.</p>
+      ) : visible.length === 0 ? (
+        <p className="muted">No files match “{search}”.</p>
       ) : (
         <div className="file-grid">
-          {items.map((item) => (
-            <div className="file-card" key={item.id}>
-              <div
-                className="file-label"
-                style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
-              >
-                {item.label.heading}
+          {visible.map((item) => (
+            <div className="file-card" key={item.id} style={{ borderLeftColor: item.label.colour }}>
+              <div className="file-card-head">
+                <span
+                  className="label-tag"
+                  style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
+                >
+                  {item.label.heading}
+                </span>
               </div>
               <div className="file-body">
                 <div className="file-name" title={item.fileName}>
