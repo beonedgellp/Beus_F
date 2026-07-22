@@ -1,4 +1,12 @@
-import { ChangeEvent, ClipboardEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  ClipboardEvent,
+  FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -43,6 +51,7 @@ export default function Chat() {
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const didInitialScroll = useRef(false);
 
   function replyPreview(m: ChatMessage): string {
     if (m.deleted) return 'deleted message';
@@ -53,8 +62,14 @@ export default function Chat() {
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Land on the newest message: jump instantly on first load (no visible
+  // scroll), then smooth-scroll for messages that arrive afterwards.
+  useLayoutEffect(() => {
+    if (messages.length === 0) return;
+    bottomRef.current?.scrollIntoView({
+      behavior: didInitialScroll.current ? 'smooth' : 'auto',
+    });
+    didInitialScroll.current = true;
   }, [messages]);
 
   // Chat colour preferences live on the user's profile, so they follow the

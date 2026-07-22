@@ -1,4 +1,12 @@
-import { ChangeEvent, ClipboardEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  ClipboardEvent,
+  FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, downloadFile, extractError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -51,6 +59,7 @@ export default function GroupView() {
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const didInitialScroll = useRef(false);
 
   function flash(msg: string) {
     setNotice(msg);
@@ -74,12 +83,18 @@ export default function GroupView() {
 
   useEffect(() => {
     setLoading(true);
+    didInitialScroll.current = false;
     void loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Jump straight to the newest message on first load; smooth-scroll after.
+  useLayoutEffect(() => {
+    if (messages.length === 0) return;
+    bottomRef.current?.scrollIntoView({
+      behavior: didInitialScroll.current ? 'smooth' : 'auto',
+    });
+    didInitialScroll.current = true;
   }, [messages]);
 
   // apply live socket updates
