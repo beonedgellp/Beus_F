@@ -4,6 +4,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import UploadForm, { UploadPayload } from '../components/UploadForm';
 import { DownloadIcon, TrashIcon } from '../components/Icons';
 import { formatBytes, formatTime } from '../utils/format';
+import { contrastText } from '../utils/color';
 import type { FileItem } from '../api/types';
 
 export default function Collective() {
@@ -94,7 +95,10 @@ export default function Collective() {
         <div className="file-grid">
           {items.map((item) => (
             <div className="file-card" key={item.id}>
-              <div className="file-label" style={{ background: item.label.colour }}>
+              <div
+                className="file-label"
+                style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
+              >
                 {item.label.heading}
               </div>
               <div className="file-body">

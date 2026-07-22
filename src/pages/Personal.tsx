@@ -11,6 +11,7 @@ import {
   RevokeIcon,
 } from '../components/Icons';
 import { formatBytes, formatDate, formatTime } from '../utils/format';
+import { contrastText } from '../utils/color';
 import type { FileItem, ShareLinkDto } from '../api/types';
 
 export default function Personal() {
@@ -207,7 +208,10 @@ export default function Personal() {
         <div className="file-grid">
           {items.map((item) => (
             <div className="file-card" key={item.id}>
-              <div className="file-label" style={{ background: item.label.colour }}>
+              <div
+                className="file-label"
+                style={{ background: item.label.colour, color: contrastText(item.label.colour) }}
+              >
                 {item.label.heading}
               </div>
               <div className="file-body">
