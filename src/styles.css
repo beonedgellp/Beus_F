@@ -406,6 +406,9 @@ input {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--chat-bg, transparent);
+  border-radius: 12px;
+  padding: 6px 10px;
 }
 .chat-header {
   display: flex;
@@ -451,12 +454,10 @@ input {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 16px 12px;
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: var(--chat-bg, transparent);
-  border-radius: 10px;
 }
 .msg {
   display: flex;
