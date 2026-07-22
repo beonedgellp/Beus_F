@@ -9,7 +9,6 @@ export default function Layout() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">Be</span>
           <span className="brand-name">BeUs</span>
         </div>
         <nav className="nav">

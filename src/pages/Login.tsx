@@ -28,10 +28,7 @@ export default function Login() {
   return (
     <div className="center-screen">
       <form className="card auth-card" onSubmit={onSubmit}>
-        <div className="auth-brand">
-          <span className="brand-mark brand-mark-lg" aria-hidden="true">Be</span>
-          <h1 className="auth-title">BeUs</h1>
-        </div>
+        <h1 className="auth-title">BeUs</h1>
         <p className="auth-sub">Made for the Beonedge family</p>
 
         {error && <div className="alert-error">{error}</div>}
