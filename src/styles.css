@@ -37,9 +37,9 @@
   --success: #00d9c0;
   --success-weak: rgba(0, 217, 192, 0.16);
 
-  /* chat bubbles */
-  --bubble-other: #17264d;
-  --bubble-mine: #1877d6;
+  /* chat bubbles - muted dark blues that blend with the navy background */
+  --bubble-other: #18213f;
+  --bubble-mine: #2c467f;
 
   --radius: 10px;
   --radius-sm: 7px;
@@ -265,7 +265,7 @@ input {
   height: 28px;
 }
 .icon-btn-danger {
-  color: #ff8a8d;
+  color: var(--danger);
   border-color: rgba(255, 90, 95, 0.34);
 }
 .icon-btn-danger:hover {
@@ -482,8 +482,9 @@ input {
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 4px;
 }
-/* deleted messages are subdued, not a bright bubble */
-.msg-bubble.deleted {
+/* deleted messages are subdued, not a filled bubble (override mine too) */
+.msg-bubble.deleted,
+.msg.mine .msg-bubble.deleted {
   background: transparent;
   border: 1px dashed var(--border);
 }
@@ -991,7 +992,13 @@ input {
   background: var(--amber-weak);
   color: var(--gold);
 }
-.msg-action-danger:hover {
+/* the dustbin/delete icon is red */
+.msg-action-danger,
+.msg.mine .msg-action-danger {
+  color: var(--danger);
+}
+.msg-action-danger:hover,
+.msg.mine .msg-action-danger:hover {
   background: var(--danger-weak);
   color: var(--danger-hover);
 }
