@@ -1,0 +1,15 @@
+# Keep the build context small.
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.local
+*.log
+npm-debug.log*
+.DS_Store
+Dockerfile
+README.md
