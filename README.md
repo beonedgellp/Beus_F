@@ -16,7 +16,20 @@ backend in **Beus_B**.
   so outsiders can download a specific file.
 - **Public share page** at `/shared/:token` for recipients.
 
-## Setup
+## Run everything in Docker (recommended)
+
+The easiest way to run the full app (this frontend + the backend + MongoDB) is
+via Docker. The frontend ships with a `Dockerfile` (Vite build served by
+nginx, with SPA fallback) that is orchestrated from the **Beus_B** repo's
+`docker-compose.yml`. See **Beus_B/DOCKER.md**. In short, from the `Beus_B`
+folder next to this one:
+
+```bash
+cp .env.docker.example .env
+docker compose up -d --build   # frontend :5173, backend :4000
+```
+
+## Setup (running natively)
 
 ```bash
 cp .env.example .env      # set VITE_API_URL to your backend URL
