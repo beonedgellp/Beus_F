@@ -627,23 +627,37 @@ input {
   display: flex;
   gap: 8px;
   padding-top: 14px;
-  align-items: center;
+  align-items: flex-end;
 }
 .chat-input-field {
   flex: 1;
   min-width: 0;
   position: relative;
 }
-.chat-input input[type='text'] {
+.chat-input input[type='text'],
+.chat-input textarea {
   width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-2);
   color: var(--text);
+  font: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.chat-input input[type='text']:focus {
+/* Auto-growing message box: starts one line tall, grows with the text, then
+   scrolls once it reaches a few lines. */
+.chat-input textarea {
+  display: block;
+  resize: none;
+  line-height: 1.45;
+  min-height: 46px;
+  max-height: 168px;
+  overflow-y: auto;
+}
+.chat-input input[type='text']:focus,
+.chat-input textarea:focus {
   outline: none;
   border-color: var(--sky);
   box-shadow: 0 0 0 2px var(--primary-weak);
@@ -1051,11 +1065,22 @@ input {
     max-width: 100%;
   }
 
+  /* Telegram-style wide box: the text field takes the whole first row, the
+     tool buttons wrap onto the row below it. */
   .chat-input {
-    gap: 5px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
-  .chat-input input[type='text'] {
-    padding: 11px;
+  .chat-input-field {
+    flex: 1 1 100%;
+    order: -1;
+  }
+  .chat-input input[type='text'],
+  .chat-input textarea {
+    padding: 11px 13px;
+  }
+  .chat-input textarea {
+    max-height: 140px;
   }
   /* free up room in the composer: show only the Send icon, tighten buttons */
   .chat-input .btn-icon-label {
@@ -1654,6 +1679,20 @@ input {
 .bell-item-time {
   font-size: 11px;
   color: var(--muted);
+}
+
+/* On phones the bell sits mid-header (avatar/logout are to its right), so an
+   anchored panel spilled off-screen. Pin it below the header, fitted to the
+   viewport width instead. */
+@media (max-width: 640px) {
+  .bell-panel {
+    position: fixed;
+    top: 62px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 72vh;
+  }
 }
 
 /* groups list */

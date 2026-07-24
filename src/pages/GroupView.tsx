@@ -2,6 +2,7 @@ import {
   ChangeEvent,
   ClipboardEvent,
   FormEvent,
+  KeyboardEvent,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -60,7 +61,7 @@ export default function GroupView() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const didInitialScroll = useRef(false);
 
@@ -99,6 +100,22 @@ export default function GroupView() {
     });
     didInitialScroll.current = true;
   }, [messages]);
+
+  // Auto-grow the composer to fit its text (up to the CSS max-height).
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
+
+  /** Ctrl/Cmd+Enter sends; plain Enter adds a new line (the box grows). */
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }
 
   // apply live socket updates
   useEffect(() => {
@@ -195,7 +212,7 @@ export default function GroupView() {
     if (fileRef.current) fileRef.current.value = '';
   }
 
-  function onPaste(e: ClipboardEvent<HTMLInputElement>) {
+  function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
@@ -544,12 +561,14 @@ export default function GroupView() {
 
           <form className="chat-input" onSubmit={sendMessage}>
             <div className="chat-input-field">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                className="chat-textarea"
+                rows={1}
                 placeholder="Message the group…"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
                 onPaste={onPaste}
               />
               {showEmoji && (
