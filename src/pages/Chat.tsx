@@ -594,6 +594,7 @@ export default function Chat() {
             />
           )}
         </span>
+        <span className="composer-break" aria-hidden="true" />
         <button
           type="submit"
           className="btn-primary btn-icon"

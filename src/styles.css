@@ -662,6 +662,11 @@ input {
   border-color: var(--sky);
   box-shadow: 0 0 0 2px var(--primary-weak);
 }
+/* Forces a flex line break on mobile so the tool buttons drop below the
+   message box + Send row. Hidden on desktop (single-row composer). */
+.composer-break {
+  display: none;
+}
 
 /* ---------- Spaces ---------- */
 .space-header {
@@ -1065,15 +1070,31 @@ input {
     max-width: 100%;
   }
 
-  /* Telegram-style wide box: the text field takes the whole first row, the
-     tool buttons wrap onto the row below it. */
+  /* Telegram-style: the message box and Send share the top row (Send on the
+     right); the other tool buttons wrap onto the row below. */
   .chat-input {
     gap: 6px;
     flex-wrap: wrap;
+    align-items: flex-end;
   }
   .chat-input-field {
-    flex: 1 1 100%;
-    order: -1;
+    flex: 1 1 auto;
+    min-width: 0;
+    order: 1;
+  }
+  .chat-input > .btn-primary {
+    order: 2;
+  }
+  .chat-input > .composer-break {
+    display: block;
+    flex-basis: 100%;
+    height: 0;
+    margin: 0;
+    order: 3;
+  }
+  .chat-input > .icon-btn,
+  .chat-input > .composer-tool {
+    order: 4;
   }
   .chat-input input[type='text'],
   .chat-input textarea {
@@ -1082,7 +1103,7 @@ input {
   .chat-input textarea {
     max-height: 140px;
   }
-  /* free up room in the composer: show only the Send icon, tighten buttons */
+  /* show only the Send icon on small screens */
   .chat-input .btn-icon-label {
     display: none;
   }
