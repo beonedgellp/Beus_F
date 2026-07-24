@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// Normalise the configured base URL: strip any trailing slash(es). A trailing
+// slash makes `io(API_URL)` request a bogus Socket.IO namespace ("Invalid
+// namespace"), and also produces double slashes in the axios baseURL.
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
 const TOKEN_KEY = 'beus_token';
 
