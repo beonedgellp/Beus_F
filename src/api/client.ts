@@ -1,20 +1,21 @@
 import axios from 'axios';
 
-// Normalise the configured base URL: strip any trailing slash(es). A trailing
-// slash makes `io(API_URL)` request a bogus Socket.IO namespace ("Invalid
-// namespace"), and also produces double slashes in the axios baseURL.
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
+// The configured backend URL (VITE_API_URL) can take several shapes:
+//   - an absolute origin (e.g. "http://localhost:4000") for local dev, where
+//     the frontend (5173) and backend (4000) are on different origins;
+//   - a relative path (e.g. "/api") or empty, for production where nginx serves
+//     the app and proxies "/api" + "/socket.io" on the SAME origin.
+const RAW_API = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+const IS_ABSOLUTE = /^https?:\/\//i.test(RAW_API);
 
-// Socket.IO must connect to the ORIGIN only. Any PATH in VITE_API_URL would be
-// interpreted by Socket.IO as a namespace and rejected by the server with
-// "Invalid namespace". Deriving the origin guarantees the default namespace.
-export const SOCKET_URL = (() => {
-  try {
-    return new URL(API_URL).origin;
-  } catch {
-    return API_URL;
-  }
-})();
+// Base for REST calls. Absolute in dev; empty (same-origin) in production so
+// axios resolves to a relative "/api/..." that nginx proxies to the backend.
+export const API_URL = IS_ABSOLUTE ? RAW_API : '';
+
+// Socket.IO must connect to an ORIGIN, never a path. A path (like "/api") is
+// interpreted by Socket.IO as a NAMESPACE and rejected with "Invalid
+// namespace". Use the configured origin in dev, else the current site origin.
+export const SOCKET_URL = IS_ABSOLUTE ? new URL(RAW_API).origin : window.location.origin;
 
 const TOKEN_KEY = 'beus_token';
 
