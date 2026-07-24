@@ -5,6 +5,17 @@ import axios from 'axios';
 // namespace"), and also produces double slashes in the axios baseURL.
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
+// Socket.IO must connect to the ORIGIN only. Any PATH in VITE_API_URL would be
+// interpreted by Socket.IO as a namespace and rejected by the server with
+// "Invalid namespace". Deriving the origin guarantees the default namespace.
+export const SOCKET_URL = (() => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return API_URL;
+  }
+})();
+
 const TOKEN_KEY = 'beus_token';
 
 export function getToken(): string | null {

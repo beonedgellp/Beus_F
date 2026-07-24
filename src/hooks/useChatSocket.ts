@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { API_URL, getToken } from '../api/client';
+import { SOCKET_URL, getToken } from '../api/client';
 import type { ChatMessage } from '../api/types';
 
 export interface PresenceEvent {
@@ -18,7 +18,7 @@ export function useChatSocket() {
     const token = getToken();
     if (!token) return;
 
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
     });
